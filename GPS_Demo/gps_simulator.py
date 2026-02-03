@@ -4,6 +4,7 @@ Mode 1: fixed-speed along route
 Mode 2: teleport to destination
 """
 
+import os
 import requests
 import gpxpy
 import gpxpy.gpx
@@ -11,13 +12,61 @@ import polyline
 import datetime
 import random
 import math
+import argparse
 
-# IMPORTANT
-# do not hardcode real API key in code
-API_KEY = "API_KEY_HERE"
+try:
+    from dotenv import load_dotenv
+except ImportError as e:
+    raise ImportError(
+        "python-dotenv is not installed.\n"
+        "Install it with: pip install python-dotenv"
+    ) from e
 
-# mode options
-MODE = 3  # 1 = fixed-speed route, 2 = teleport
+# Load environment variables from .env file
+load_dotenv()
+
+API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")  # environment variable name
+
+if not API_KEY:
+    raise RuntimeError(
+        "Environment variable GOOGLE_MAPS_API_KEY not found.\n"
+        "Please add GOOGLE_MAPS_API_KEY=your_api_key to the .env file"
+    )
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--mode",
+        type=str,
+        choices=["plant", "fly", "plant_loop"],
+        default="fly",
+        help="plant | fly | plant_loop"
+    )
+    parser.add_argument(
+        "--src",
+        type=str,
+        default="2410 Shakespeare St, Houston, TX 77030",
+        help="source location"
+    )
+    parser.add_argument(
+        "--dst",
+        type=str,
+        default="3915 Kirby Dr, Houston, TX 77098",
+        help="destination location"
+    )
+    parser.add_argument(
+        "--speed",
+        type=int,
+        default=30,
+        help="speed in km/h"
+    )
+    parser.add_argument(
+        "--interval",
+        type=float,
+        default=0.5,
+        help="time interval between points in seconds"
+    )
+    return parser.parse_args()
 
 def steps_to_route_points(steps):
     route_points = []
@@ -210,17 +259,19 @@ def create_gpx_mode3_loop(addresses, laps, speed_kmh, interval_s, pause_each_sto
     return gpx
 
 def main():
-    origin_address = "2410 Shakespeare St, Houston, TX 77030"
-    destination_address = "3915 Kirby Dr, Houston, TX 77098"
     pause_hours = 1
 
-    origin_coords = get_coordinates(origin_address)
-    destination_coords = get_coordinates(destination_address)
+    args = parse_args()
+    mode = args.mode
+    src = args.src
+    dst = args.dst
+    speed_kmh = args.speed
+    interval_s = args.interval
 
-    if MODE == 1:
-        # fixed-speed route
-        speed_kmh = 30
-        interval_s = 0.5
+    origin_coords = get_coordinates(src)
+    destination_coords = get_coordinates(dst)
+
+    if mode == "plant":
         steps = get_route_steps(f"{origin_coords[0]},{origin_coords[1]}", f"{destination_coords[0]},{destination_coords[1]}")
         gpx = create_gpx_mode1_fixed_speed(
             origin_coords=origin_coords,
@@ -230,8 +281,7 @@ def main():
             interval_s=interval_s,
             pause_hours=pause_hours,
         )
-    elif MODE == 2:
-        # teleport
+    elif mode == "fly":
         teleport_seconds = 1  # change to 0 if target accepts same timestamp
         gpx = create_gpx_mode2_teleport(
             origin_coords=origin_coords,
@@ -239,22 +289,14 @@ def main():
             pause_hours=pause_hours,
             teleport_seconds=teleport_seconds,
         )
-    elif MODE == 3:
+    elif mode == "plant_loop":
         addresses = [
             "2410 Shakespeare St, Houston, TX 77030",
-            "2502 W Holcombe Blvd, Houston, TX 77030",
-            "4004 Bellaire Blvd, Houston, TX 77025",
-            "3756 University Blvd, Houston, TX 77005",
+            "2301 University Blvd, Houston, TX 77005",
+            "6010 Greenbriar Dr, Houston, TX 77030",
+            "2729 Pemberton Dr, Houston, TX 77005",
         ]
-        # addresses = [
-        #     "2410 Shakespeare St, Houston, TX 77030",
-        #     "2301 University Blvd, Houston, TX 77005",
-        #     "6010 Greenbriar Dr, Houston, TX 77030",
-        #     "2729 Pemberton Dr, Houston, TX 77005",
-        # ]
         laps = 1
-        speed_kmh = 30
-        interval_s = 0.5
         pause_each_stop_hours = 0  # set to 1 if you want 1 hour stop at every node
 
         gpx = create_gpx_mode3_loop(
@@ -265,7 +307,7 @@ def main():
             pause_each_stop_hours=pause_each_stop_hours,
         )
     else:
-        raise ValueError("MODE must be 1 or 2")
+        raise ValueError("MODE must be plant, fly, or plant_loop")
 
     with open("route.gpx", "w") as f:
         f.write(gpx.to_xml())
