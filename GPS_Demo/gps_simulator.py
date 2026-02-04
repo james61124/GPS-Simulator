@@ -295,6 +295,7 @@ def main():
             "2301 University Blvd, Houston, TX 77005",
             "6010 Greenbriar Dr, Houston, TX 77030",
             "2729 Pemberton Dr, Houston, TX 77005",
+            "2740 University Blvd, Houston, TX 77005",
         ]
         laps = 1
         pause_each_stop_hours = 0  # set to 1 if you want 1 hour stop at every node

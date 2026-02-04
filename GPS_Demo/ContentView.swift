@@ -1,21 +1,12 @@
-//
-//  ContentView.swift
-//  GPS_Demo
-//
-//  Created by james on 2026/2/1.
-//
-
 import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        Text("Writing 20 steps every 10 seconds")
+            .onAppear {
+                HealthManager.shared.requestHealthAuth()
+                HealthManager.shared.startWritingFixedSteps()
+            }
     }
 }
 
