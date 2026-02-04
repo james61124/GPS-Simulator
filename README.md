@@ -8,41 +8,47 @@ It supports realistic movement, instant jumping, and looped routes
 ## Requirements
 
 - Python 3.9 or newer
-- Google Maps API key with Geocoding API and Directions API enabled
-
-Install required Python packages 
-```
-pip install requests gpxpy polyline python-dotenv
-```
-
-**Important**: Do not use Python virtual environment (venv) for this project. Xcode may have issues accessing the interpreter. (Currently debugging this issue)
+- Google Maps API key. There is a free quota. Register at [Google Cloud](https://console.cloud.google.com/welcome?project=gps-demo-486121) and enable the **Geocoding API** and **Directions API**.
 ---
 
 ## Setup
+1. Install required Python packages
 
-Create a .env file in project root and add your API key  
-```
-GOOGLE_MAPS_API_KEY=your_api_key_here
-```
+	**Important:** Do not use Python virtual environment (venv) for this project. Xcode may have issues accessing the interpreter. (Currently debugging this issue)
+
+	```
+	pip install requests gpxpy polyline python-dotenv
+	```
+
+2. Create a .env file in project root and add your API key
+
+	```
+	GOOGLE_MAPS_API_KEY=your_api_key_here
+	```
 ---
 
 ## Usage
 
-Run script from terminal
-python gps_simulator.py [options]
+1. Run script from terminal: 
+```python gps_simulator.py [options]```
+2. Use the generated GPX file for simulation (details below).
 
 ---
 
 ## Command Line Arguments
 All arguments are optional and default values are provided.
 
+You can use plain text addresses or latitude/longitude for `--src` and `--dst`, e.g. "29.7341222, -95.4223470". For addresses, remove special symbols.
+
 | Argument | Type | Default | Description |
 |--------|------|---------|-------------|
 | --mode | string | fly | Movement mode: plant, fly, plant_loop (plant_loop uses predefined addresses, not support src & dst arguments) |
-| --src | string | 2410 Shakespeare St, Houston, TX 77030 | Starting location. Ignored in fly mode |
-| --dst | string | 3915 Kirby Dr, Houston, TX 77098 | Destination location |
+| --src | string | 2410 Shakespeare St, Houston, TX 77030 | Starting location. Ignored in fly & plant_loop mode |
+| --dst | string | 3915 Kirby Dr, Houston, TX 77098 | Destination location. Ignored in plant_loop mode |
 | --speed | int | 30 | Recommended default. Change only if needed |
 | --interval | float | 0.5 | Recommended default. Change only if needed |
+
+
 ---
 
 ## Modes
@@ -53,7 +59,7 @@ Simulates realistic movement along a Google Maps route at constant speed
 GPX points are generated at uniform time intervals
 
 Example usage  
-python gps_simulator.py --mode plant --src "2410 Shakespeare St, Houston, TX 77030" --dst "3915 Kirby Dr, Houston, TX 77098"
+python gps_simulator.py --mode plant --src "2410 Shakespeare St, Houston, TX 77030" --dst "29.7341222, -95.4223470"
 
 ---
 
@@ -84,11 +90,11 @@ python gps_simulator.py --mode plant_loop
 - GPX contains waypoints with timestamps
 - Compatible with Xcode, Android Studio, and most GPS simulators
 
-### Using the Generated GPX File
+## Using the Generated GPX File
 
 After running gps_simulator.py, you can use the generated route.gpx file for location simulation:
 
-**Xcode (iOS Simulator)**
+### Xcode (iOS Simulator)
 
 **First-time setup:**
 1. On your iPhone, go to Settings → Privacy & Security and enable **Developer Mode**
@@ -105,9 +111,9 @@ After running gps_simulator.py, you can use the generated route.gpx file for loc
 1. Generate a GPX file using the gps_simulator.py script
 2. In Xcode, go to **Debug** → **Simulate Location** → select **route**
 3. The simulator will follow the GPX route automatically
-- **Health Data**: The app currently writes 20 steps to HealthKit every 10 seconds when running. To disable this feature, open [ContentView.swift](GPS_Demo/ContentView.swift) and comment out the two HealthManager function calls in the `onAppear` block
 
-**Android Studio (Android Emulator)**
+### Android Studio (Android Emulator)
+
 **Note**: This feature has not been tested yet. Welcome feedback and bug reports!
 1. Open the emulator's Extended Controls (⋮ button)
 2. Go to Location section
@@ -118,7 +124,6 @@ After running gps_simulator.py, you can use the generated route.gpx file for loc
 
 ## Notes
 
-- Locations may be plain text addresses or latitude,longitude pairs
 - Google Maps API usage counts toward your quota
 - Short routes automatically fall back to simple start and end points
 
