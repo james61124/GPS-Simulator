@@ -109,8 +109,9 @@ After running gps_simulator.py, you can use the generated route.gpx file for loc
 
 **Running the GPS simulation:**
 1. Generate a GPX file using the gps_simulator.py script
-2. In Xcode, go to **Debug** → **Simulate Location** → select **route**
-3. The simulator will follow the GPX route automatically
+2. Wait until your iPhone opens the app (with "Hello, world!" on the screen)
+3. In Xcode, go to **Debug** → **Simulate Location** → select **route**
+4. The simulator will follow the GPX route automatically
 
 ### Android Studio (Android Emulator)
 
