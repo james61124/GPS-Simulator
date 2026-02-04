@@ -1,7 +1,7 @@
 """
 Main script to create GPX file (2 modes)
 Mode 1: fixed-speed along route
-Mode 2: teleport to destination
+Mode 2: jump to destination
 """
 
 import os
@@ -33,39 +33,56 @@ if not API_KEY:
         "Please add GOOGLE_MAPS_API_KEY=your_api_key to the .env file"
     )
 
+ARG_SPECS = [
+    {
+        "flags": ["--mode"],
+        "type": str,
+        "choices": ["plant", "fly", "plant_loop"],
+        "default": "fly",
+        "help": "Movement mode: plant, fly, plant_loop (plant_loop uses predefined addresses, not support src & dst arguments)",
+    },
+    {
+        "flags": ["--src"],
+        "type": str,
+        "default": "2410 Shakespeare St, Houston, TX 77030",
+        "help": "Starting location. Ignored in fly mode",
+    },
+    {
+        "flags": ["--dst"],
+        "type": str,
+        "default": "3915 Kirby Dr, Houston, TX 77098",
+        "help": "Destination location",
+    },
+    {
+        "flags": ["--speed"],
+        "type": int,
+        "default": 30,
+        "help": "Recommended default. Change only if needed",
+    },
+    {
+        "flags": ["--interval"],
+        "type": float,
+        "default": 0.5,
+        "help": "Recommended default. Change only if needed",
+    },
+]
+
+def add_cli_arguments(parser):
+    for spec in ARG_SPECS:
+        flags = spec["flags"]
+        kwargs = {
+            "type": spec["type"],
+            "default": spec["default"],
+            "help": spec["help"],
+        }
+        if "choices" in spec:
+            kwargs["choices"] = spec["choices"]
+        parser.add_argument(*flags, **kwargs)
+    return parser
+
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--mode",
-        type=str,
-        choices=["plant", "fly", "plant_loop"],
-        default="fly",
-        help="plant | fly | plant_loop"
-    )
-    parser.add_argument(
-        "--src",
-        type=str,
-        default="2410 Shakespeare St, Houston, TX 77030",
-        help="source location"
-    )
-    parser.add_argument(
-        "--dst",
-        type=str,
-        default="3915 Kirby Dr, Houston, TX 77098",
-        help="destination location"
-    )
-    parser.add_argument(
-        "--speed",
-        type=int,
-        default=30,
-        help="speed in km/h"
-    )
-    parser.add_argument(
-        "--interval",
-        type=float,
-        default=0.5,
-        help="time interval between points in seconds"
-    )
+    add_cli_arguments(parser)
     return parser.parse_args()
 
 def steps_to_route_points(steps):
@@ -198,15 +215,15 @@ def create_gpx_mode1_fixed_speed(origin_coords, destination_coords, steps, speed
     current_time = add_pause_waypoints(gpx, destination_coords, current_time, pause_hours)
     return gpx
 
-def create_gpx_mode2_teleport(origin_coords, destination_coords, pause_hours, teleport_seconds=1):
+def create_gpx_mode2_jump(origin_coords, destination_coords, pause_hours, jump_seconds=1):
     gpx = gpxpy.gpx.GPX()
     current_time = datetime.datetime.now()
 
     # start point
     gpx.waypoints.append(gpxpy.gpx.GPXWaypoint(origin_coords[0], origin_coords[1], time=current_time))
 
-    # "fly" to destination quickly
-    current_time += datetime.timedelta(seconds=teleport_seconds)
+    # "jump" to destination quickly
+    current_time += datetime.timedelta(seconds=jump_seconds)
     gpx.waypoints.append(gpxpy.gpx.GPXWaypoint(destination_coords[0], destination_coords[1], time=current_time))
 
     # pause at destination
@@ -282,12 +299,12 @@ def main():
             pause_hours=pause_hours,
         )
     elif mode == "fly":
-        teleport_seconds = 1  # change to 0 if target accepts same timestamp
-        gpx = create_gpx_mode2_teleport(
+        jump_seconds = 1  # change to 0 if target accepts same timestamp
+        gpx = create_gpx_mode2_jump(
             origin_coords=origin_coords,
             destination_coords=destination_coords,
             pause_hours=pause_hours,
-            teleport_seconds=teleport_seconds,
+            jump_seconds=jump_seconds,
         )
     elif mode == "plant_loop":
         addresses = [
