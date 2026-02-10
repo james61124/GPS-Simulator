@@ -163,18 +163,30 @@ def decode_polyline(polyline_str):
     return polyline.decode(polyline_str)
 
 def add_pause_waypoints(gpx, destination_coords, current_time, pause_hours):
+    # Total pause duration in seconds
     pause_duration = pause_hours * 3600
-    num_pause_points = pause_hours * 60  # 1 point per minute
+
+    # Emit frequent updates to prevent OS from snapping back to real location
+    interval_seconds = 1  # 1 point per second (was 1 per minute)
+    num_pause_points = int(pause_duration // interval_seconds)
+
     if num_pause_points <= 0:
         return current_time
 
     for _ in range(num_pause_points):
-        current_time += datetime.timedelta(seconds=pause_duration / num_pause_points)
+        current_time += datetime.timedelta(seconds=interval_seconds)
+
+        # Add small visible jitter so points are not quantized as identical
+        # ~1–2 meters scale depending on latitude
+        jitter = 2e-5
         altered_coords = (
-            destination_coords[0] + 1e-8 * random.random(),
-            destination_coords[1] + 1e-8 * random.random(),
+            destination_coords[0] + jitter * (random.random() - 0.5),
+            destination_coords[1] + jitter * (random.random() - 0.5),
         )
-        gpx.waypoints.append(gpxpy.gpx.GPXWaypoint(altered_coords[0], altered_coords[1], time=current_time))
+
+        gpx.waypoints.append(
+            gpxpy.gpx.GPXWaypoint(altered_coords[0], altered_coords[1], time=current_time)
+        )
 
     return current_time
 
@@ -215,16 +227,14 @@ def create_gpx_mode1_fixed_speed(origin_coords, destination_coords, steps, speed
     current_time = add_pause_waypoints(gpx, destination_coords, current_time, pause_hours)
     return gpx
 
-def create_gpx_mode2_jump(origin_coords, destination_coords, pause_hours, jump_seconds=1):
+def create_gpx_mode2_jump(destination_coords, pause_hours):
     gpx = gpxpy.gpx.GPX()
     current_time = datetime.datetime.now()
 
-    # start point
-    gpx.waypoints.append(gpxpy.gpx.GPXWaypoint(origin_coords[0], origin_coords[1], time=current_time))
-
-    # "jump" to destination quickly
-    current_time += datetime.timedelta(seconds=jump_seconds)
-    gpx.waypoints.append(gpxpy.gpx.GPXWaypoint(destination_coords[0], destination_coords[1], time=current_time))
+    # start directly at destination
+    gpx.waypoints.append(
+        gpxpy.gpx.GPXWaypoint(destination_coords[0], destination_coords[1], time=current_time)
+    )
 
     # pause at destination
     current_time = add_pause_waypoints(gpx, destination_coords, current_time, pause_hours)
@@ -301,10 +311,8 @@ def main():
     elif mode == "fly":
         jump_seconds = 1  # change to 0 if target accepts same timestamp
         gpx = create_gpx_mode2_jump(
-            origin_coords=origin_coords,
             destination_coords=destination_coords,
-            pause_hours=pause_hours,
-            jump_seconds=jump_seconds,
+            pause_hours=pause_hours
         )
     elif mode == "plant_loop":
         addresses = [
