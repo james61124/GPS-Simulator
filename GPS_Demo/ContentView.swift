@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     // State to store the number of steps entered by the user
-    @State private var stepsInput: String = "5000"
+    @State private var stepsInput: String = ""
     
     // State to control the visibility of the success feedback message
     @State private var showSuccessMessage: Bool = false
