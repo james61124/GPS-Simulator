@@ -32,6 +32,7 @@ It supports realistic movement, instant jumping, and looped routes
 1. Run script from terminal: 
 ```python gps_simulator.py [options]```
 2. Use the generated GPX file for simulation (details below).
+3. Run the app on your device, enter the desired steps, and click **Add Steps Now**.
 
 ---
 
@@ -109,9 +110,14 @@ After running gps_simulator.py, you can use the generated route.gpx file for loc
 
 **Running the GPS simulation:**
 1. Generate a GPX file using the gps_simulator.py script
-2. Wait until your iPhone opens the app (with "Hello, world!" on the screen)
-3. In Xcode, go to **Debug** → **Simulate Location** → select **route**
-4. The simulator will follow the GPX route automatically
+2. Import to Xcode and wait for launch (until your iPhone opens the app) 
+3. Configure Auto-Start in Xcode (Optional):
+	- Go to Product → Scheme → Edit Scheme
+	- Select Run > Options and check Allow Location Simulation.
+	- Set Default Location to your route file.
+4. Manual Start in Xcode:
+	- go to **Debug** → **Simulate Location** → select **route**
+5. Success: The simulator will follow the GPX route automatically
 
 ### Android Studio (Android Emulator)
 
